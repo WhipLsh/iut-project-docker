@@ -1,5 +1,20 @@
 services:
-  app:
+  # Exo 4
+  web:
     build: .
     ports:
-      - "8080:8080"
+      - "80:8080"
+    # Exo 3
+    environment:
+      - APP_USER=There
+    depends_on:
+      - redis
+  # Exo 2
+  redis:
+    image: redis:8
+    # Exo 6
+    volumes:
+      - redis_data:/data
+# Exo 6
+volumes:
+  redis_data:
