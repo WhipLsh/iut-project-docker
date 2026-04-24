@@ -1,17 +1,20 @@
-FROM ubuntu:24.04
-
-
-RUN apt update && \
-    apt install -y \
-        openjdk-25-jdk && \
-    apt clean
-
+# Étape 1
+FROM eclipse-temurin:25-jdk AS builder
 WORKDIR /app
-
 COPY . .
-
-RUN ./gradlew build -x test --no-daemon
-
-EXPOSE 8080
-
-CMD ["java", "-jar", "build/libs/app.jar"]
+RUN ./gradlew build -x test
+# Étape 2
+RUN jlink \
+    --add-modules base,naming,logging,management,security.jgss,desktop,xml,instrument \
+    --strip-debug \
+    --no-man-pages \
+    --no-header-files \
+    --compress=2 \
+    --output /minimal-jre
+# Étape 3
+FROM ubuntu:24.04
+WORKDIR /app
+COPY --from=builder /minimal-jre /opt/jre
+ENV PATH="/opt/jre/bin:$PATH"
+COPY --from=builder /app/build/libs/app.jar ./app.jar
+ENTRYPOINT ["java", "-jar", "app.jar"]
